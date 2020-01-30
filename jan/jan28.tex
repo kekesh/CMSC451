@@ -18,8 +18,90 @@ As an introduction to this course, we'll discuss the \vocab{stable marriage prob
     Given a set of $n$ men and $n$ women, match each man with a woman in such a way that the matching is \textit{stable}.
 \end{quote}
 
-What do we mean when we call a matching is ``stable"? We call a matching \textit{unstable} if there exists some man $M$ who prefers a woman $W$ over the woman he is married to, and $W$ also prefers $M$ over the man she is currently married to.
+What do we mean when we call a matching is ``stable"? We call a matching \textit{unstable} if there exists some man $M$ who prefers a woman $W$ over the woman he is married to, and $W$ also prefers $M$ over the man she is currently married to. \\
 
 
 
-Gale-shapley algorithm.
+In order to better understand the problem, let's look at the $n = 2$ case. Call the two men $M_1$ and $M_2$, and call the two women $W_1$ and $W_2$.
+
+\begin{itemize}
+    \item First suppose $M_1$ prefers $W_1$ over $W_2$ and $W_1$ prefers $M_1$ over $M_2$. Also, suppose that $M_2$ prefers $W_2$ over $W_1$ and $W_2$ prefers $M_2$, then 
+    \item If both $W_1$ and $W_2$ prefer $M_1$ over $M_2$, and both $M_1$ and $M_2$ prefer $W_1$ over $W_2$, then it's still easy to see what will happen: $M_i$ will always match with $W_i$.
+    \item Now let's say $M_1$ prefers $W_1$ to $W_2$, $M_2$ prefers $W_2$ to $W_1$, $W_1$ prefers $M_2$ to $M_1$, and $W_2$ prefers $M_1$ to $M_2$. In this case, the two men rank different women first, and the two women rank different men first. However, the men's preferences ``clash" with the women's preferences. One solution to this problem is to match $M_1$ with $W_1$ and $M_2$ with $W_2$. This is stable since both men get their top preference even though the two women are unhappy.
+\end{itemize}
+
+The solution to the problem starts to get a lot more complicated when the people's preferences do not exhibit any pattern. So how do we solve this problem in the general case? We can use the \vocab{Gale-Shapley algorithm}. Before discussing this algorithm, however, we can make the following observations about this problem:
+
+\begin{itemize}
+    \item Each of the $n$ men and $M$ woman are initially unmarried. If an unmarried man $M$ chooses the woman $W$ who is ranked highest on their list, then we cannot immediately conclude whether we can match $M$ and $w$ in our final matching.This is clearly the case since if we later find out about some other man $M_2$ who prefers $W$ over any other woman, $W$ may choose $M_2$ if she likes him more than $M$. However, we cannot immediately rule out  $M$ being matched to $W$ either since a man like $M_2$ may not ever come. 
+    \item Just because everyone isn't happy doesn't mean a matching isn't stable. Some people might be unhappy, but there might not be anything they can do about it (if nobody wants to switch).
+\end{itemize}
+
+
+Moreover, we introduce the notion of a man \textit{proposing} to a woman, which a woman can either accept or reject. If she is already engaged and accepts a proposal, then her existing engagement breaks off (the previous man becomes unengaged).  \\
+
+
+Now that we've introduced these basic ideas, we can now present the algorithm:
+
+
+\vspace{1em}
+\hline
+\vspace{1em}
+
+\begin{allintypewriter}
+\# Input: A list of n men and n women to be matched. 
+
+\hspace{0.5cm} 
+
+\# Output: A valid stable matching.
+
+
+\hspace{0.5cm}
+
+
+stable\_matching \string{ 
+
+\hspace{0.5cm} set each man and each woman to "free"
+
+\hspace{0.5cm} while there exists a man m who still has a woman w to propose to \string{
+
+\hspace{1cm} let w be the highest ranked woman m hasn't proposed to. 
+
+\hspace{0cm}
+
+\hspace{1cm} if w is free \string{ 
+
+\hspace{1.5cm} (m, w) become engaged 
+
+\hspace{1cm} \string} else \string{
+
+\hspace{1.5cm} let m' be the man w is currently engaged to.
+
+\hspace{1.5cm} if w prefers m' to m \string{ 
+
+\hspace{2cm} (m', w) remain engaged. 
+
+\hspace{1.5cm} \string} else \string{
+
+\hspace{2cm} (m, w) become engaged and m' loses his partner.
+
+\hspace{1.5cm} \string}
+
+\hspace{1cm} \string}
+
+\hspace{0.5cm} \string}
+
+\string}
+
+\end{allintypewriter}
+\vspace{1em}
+\hline
+\vspace{1em}
+
+
+\begin{proposition}
+The Gale-Shapley algorithm terminates in $\mathcal{O}(n^2)$ time. 
+\end{proposition}
+\begin{proof}
+In the worst case, $n$ men end up proposing to $n$ women. The act of proposing to another person is a constant-time operation. Thus, the $\mathcal{O}(n^2)$ runtime is clear.
+\end{proof}%
