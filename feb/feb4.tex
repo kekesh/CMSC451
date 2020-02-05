@@ -1,0 +1,114 @@
+\section{Tuesday, February 4, 2020}
+
+Today, we'll recap graph terminology and elementary graph algorithms.
+
+\subsection{Graph Terminology}
+
+\begin{definition}
+A \vocab{graph} $G = (V, E)$ is defined by a set of vertices $V$ and a set of edges $E$.
+\end{definition}
+
+The number of vertices in the graph, $|V|$, is the \vocab{order} of the graph, and the number of edges in the graph, $|E|$, is the \vocab{size} of the graph. Typically, we reserve the letter $n$ for the order of a graph, and we reserve $m$ for the size of a graph. 
+\begin{definition}
+We say a graph is \vocab{directed} if its edges can only be traversed in one direction. Otherwise, we say the graph is  \vocab{undirected}.
+\end{definition}
+
+
+\begin{definition}
+A graph is called \vocab{simple} if it's an undirected graph without any loops (edges that start and end at the same vertex).
+\end{definition}
+
+\begin{definition}
+A graph is \vocab{connected} if for every pair of vertices $u, v$, there exists a path between $u$ and $v$.
+\end{definition}
+
+
+\subsection{Graph Representations}
+
+There are two primary ways in which we can represent graphs: \vocab{adjacency matrices} and \vocab{adjacency lists}. \\
+
+
+An adjacency matrix is an $n\times n$ matrix \verb!A! in which \verb!A[u][v]! is equal to $1$ if the edge $(u, v)$ exists in the graph; otherwise, \verb!A[u][v]! is equal to $0$. Note that the adjacency matrix is symmetric if and only if the graph is undirected. \\
+
+On the other hand, an adjacency list is a list of $|V|$ lists, one for each vertex. For each vertex $u \in V$, the adjacency list \verb!Adj[u]! contains all vertices $v$ for which there exists an edge $(u, v)$ in $E$. In other words, \verb!Adj[u]! contains all of the vertices adjacent to $u$ in $G$.  
+
+
+Each graph representation has its advantages and disadvantages in terms of runtime. This is summarized by the table below.
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{ | m{2cm} | m{4cm}| m{4cm} | } 
+\hline
+ & \textsc{Adjacency List} & \textsc{Adjacency Matrix} \\ 
+\hline
+Storage  & $\mathcal{O}(n + m)$ & $\O(n^2)$ \\ 
+\hline
+Add vertex & $\mathcal{O}(1)$ & $\O(n^2)$ \\ 
+\hline
+Add edge & $\mathcal{O}(1)$ & $\O(1)$ \\ 
+\hline
+Remove vertex & $\mathcal{O}(n + m)$ & $\O(n^2)$ \\ 
+\hline
+Remove edge & $\mathcal{O}(m)$ & $\O(1)$ \\ 
+\hline
+\end{tabular}
+\caption{Adjacency Matrix vs Adjacency List}
+\end{figure}
+
+An explanation of these runtimes are provided below:
+
+\begin{itemize}
+    \item An adjacency list requires $\O(n + m)$ since there are $n$ lists inside of the adjacency list. Now for each vertex $v_i$, there are $\text{deg}(v_i)$ vertices in the $i^{\text{th}}$ adjacency list. Since $\sum_{i} \text{deg}(v_i) = \O(m)$, we conclude that the adjacency list representation of a graph requires $\O(n + m)$ space. On the other hand, the adjacency matrix representation of a graph requires $\mathcal{O}(n^2)$ space since we are storing an $n\times n$ matrix. 
+    \item We can add a vertex in constant time in an adjacency list by simply inserting a new list into the adjacency list. On the other hand, to insert a new vertex in an adjacency matrix, we need to increase the dimensions of the adjacency matrix from $n\times n$ to $(n + 1) \times (n + 1)$. This requires $\mathcal{O}(n^2)$ time since we need to copy over the old matrix to a new matrix.
+    \item We can insert an edge $(u, v)$ into an adjacency list in constant time by simply appending $v$ to the end of $u$'s adjacency list (and $u$ to the end of $v$'s adjacency list if the graph is undirected). Similarly, we can insert an edge in an adjacency matrix in constant time by setting \verb!A[u][v]! to $1$ (and also seting \verb!A[v][u]! to $1$ if the graph is undirected). 
+    \item Removing a vertex requires $\mathcal{O}(n + m)$ time in an adjacency list since we need to traverse the entire adjacency list and remove any incoming our outgoing edges to the vertex being removed. Similarly, this operation takes $\O(n^2)$ time in an adjacency matrix since we need to traverse the entire matrix to remove incoming and outgoing edges.
+    \item Removing an edge $(u, v)$ requires $\mathcal{O}(m)$ time in an adjacency matrix since we only need to search the adjacency lists of $u$ and $v$ (in the worst case, these vertices have all $m$ edges in their adjacency list). On the other hand, this operation takes constant time in an adjacency matrix since we're just setting \verb!A[u][v]! to $0$.
+\end{itemize}
+
+
+\subsection{Graph Traversal}
+
+Before discussing recapping the two primary types of graph traversal, we will introduce some more terminology. \\
+
+\begin{definition}
+A \vocab{connected component} of a graph is a maximially connected subgraph of $G$. Each vertex belongs to one connected component as does each edge.
+\end{definition}
+
+There are two primary ways in which we can traverse graphs: using \vocab{breadth-first search} or \vocab{depth-first search}. These two methods of graph traversal are very similar, and they allow us to explore every vertex in a connected components of a graph. 
+
+
+\begin{enumerate}
+    \item Breadth-first search starts at some source vertex $v$ and all vertices with distance $k$ away from $v$ before visiting vertices with distance $k + 1$ from $v$. This algorithm is typically implemented using a queue, and it can be used to find the shortest path (measured by the number of edges) from the source vertex.
+    \item Depth-first search starts from a source vertex and keeps on going outward until we cannot proceed any further. We must subsequently backtrack and begin performing the depth-first search algorithm again.  This algorithm is typically implemented using a stack, whether it be the data structure or the function call stack.
+\end{enumerate}
+
+Both of these algorithms run in $\O(n^2)$ time on an adjacency matrix and $\O(n + m)$ time on an adjacency list. \\
+
+Since breadth-first search and depth-first search are guaranteed to visit all of the vertices in the same connected component as the starting vertex, we can easily write an algorithm that counts the number of connected components in a graph. \\
+
+Some C++ code is provided below.
+
+\begin{lstlisting}
+/* visited[] is a global Boolean array. */
+/* AdjList is a global vector of vectors. */
+void dfs(int v) {
+    visited[v] = true;
+    for (int i = 0; i < AdjList[v].size(); i++) {
+        int u = AdjList[v][i];
+        if (!visited[u]) {
+            dfs(v);
+        }
+    }
+}
+
+int main(void) {
+    /* Assume AdjList and other variables have been declared. */
+    int numCC = 0;
+    for (int i = 0; i < num_vertices; i++) {
+        if (!visited[i]) {
+            numCC = numCC + 1;
+            dfs(i);
+        }
+    }
+}
+\end{lstlisting}
