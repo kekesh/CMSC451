@@ -1,0 +1,169 @@
+\newpage
+\section{Thursday, February 6, 2020}
+
+Today, we'll discuss algorithms to find articulation points and biconnected components. 
+
+\subsection{Articulation Points}
+
+\begin{definition}
+An \vocab{articulation point} or \vocab{cut vertex} is a vertex in a graph $G = (V, E)$ whose removal (along with any incident edges) would disconnect $G$. 
+\end{definition}
+
+\begin{definition}
+A graph is said to be \vocab{biconnected} if the graph not have any articulation points. 
+\end{definition}
+
+For example, consider the following graph:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{scope}[every node/.style={circle,thick,draw}]
+    \node (A) at (0,0) {A};
+    \node (B) at (0,3) {B};
+    \node (C) at (2.5,4) {C};
+    \node (D) at (2.5,1) {D};
+    \node (E) at (2.5,-3) {E};
+    \node (F) at (5,3) {F} ;
+\end{scope}
+
+\begin{scope}[>={Stealth[black]},
+              every node/.style={fill=white,circle},
+              every edge/.style={draw=red,very thick}]
+    \path [-] (A) edge (B);
+    \path [-] (B) edge (C);
+    \path [-] (A) edge (D);
+    \path [-] (D) edge (C);
+    % \path [-] (A) edge (E);
+    \path [-] (D) edge (E);
+    \path [-] (D) edge (F);
+    \path [-] (C) edge (F);
+    % \path [-] (E) edge (F); 
+    % \path [-] (B) edge[bend right=40] (F); 
+\end{scope}
+\end{tikzpicture}
+\caption{A Graph with an Articulation Point}
+\end{figure}
+
+In the diagram above, Vertex $D$ is an articulation point. To see why, note that if we were to remove Vertex $D$ (and any incident edges to $D$) from the graph, then we would end up with two connected components: the first component would contain the vertices $A, B, C,$ and $F$, whereas the second component would only contain the vertex $E$. \\
+
+Why are articulation points important? One example in which searching for articulation points is important is in the study of networks. In a network modeled by a graph, an articulation point represents a vulnerability: it is a single point whose failure would split the network into two or more components (preventing communication between the nodes in different networks). 
+ \\
+ 
+ 
+ How do we find an articulation points? The brute force algorithm is as follows:
+ 
+ \begin{enumerate}
+     \item Run an $\mathcal{O}(V + E)$ depth-first search or breadth-first search to count the number of connected components in the original graph $G = (V, E)$. 
+     \item For each vertex $v\in V$, remove $v$ from $G$, and remove any of $v$'s incident edges. Run an $\mathcal{O}(V + E)$ depth-first search or breadth-first search again, and check if the number of connected components increases. If so, then $v$ is an articulation point. Restore $v$ and any of its incident edges.
+ \end{enumerate}
+ 
+This naive algorithm calls the depth-first search or breadth-first search algorithm $\mathcal{O}(V)$ times. Hence, it runs in $\mathcal{O}(V \times (V + E)) = \mathcal{O}(V^2 + VE)$ time. \\
+ 
+ 
+While this algorithm \textit{works}, it is not as efficient as we can get. We will now describe a linear-time algorithm that runs the depth-first search algorithm just \textit{once} to identify all articulation points and bridges. \\
+ 
+ 
+In this modified depth-first search, we will now maintain two numbers for each vertex $v$: \verb!dfs_num(v)! and \verb!dfs_low(v)!. The quantity \verb!dfs_num(v)! represents a label that we will assign to nodes in an increasing fashion. For instance, the vertex from which we call depth-first search would have a \verb!dfs_num! of $0$. The subsequent vertex we visit would be assigned a \verb!dfs_num! of $1$, and so on. \\
+ 
+On the other hand, the quantity \verb!dfs_low(v)!, also known as the \vocab{low-link value} of the vertex $v$, represents the smallest \verb!dfs_num! reachable from that node while performing a depth-first (including itself). \\
+ 
+Here's an example. Consider the following directed graph: 
+  
+  
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{scope}[every node/.style={circle,thick,draw}]
+    \node (A) at (0,0) {A};
+    \node (B) at (2,0) {B};
+    \node (C) at (4,0) {C};
+    \node (D) at (6,0) {D};
+    % \node (E) at (2.5,-3) {E};
+    % \node (F) at (5,3) {F} ;
+\end{scope}
+
+\begin{scope}[>={Stealth[black]},
+              every node/.style={fill=white,circle},
+              every edge/.style={draw=red,very thick}]
+    \path [-] (A) edge (B);
+    \path [-] (B) edge (C);
+    \path [-] (C) edge (D);
+    \path [-] (C) edge[bend right=40] (A); 
+
+    % \path [-] (A) edge (D);
+    % \path [-] (D) edge (C);
+    % \path [-] (A) edge (E);
+    % \path [-] (D) edge (E);
+    % \path [-] (D) edge (F);
+    % \path [-] (C) edge (F);
+    % \path [-] (E) edge (F); 
+    % \path [-] (B) edge[bend right=40] (F); 
+\end{scope}
+\label{artpoint:ex}
+\end{tikzpicture}
+\caption{Articulation Point Example}
+\end{figure}
+
+Suppose we perform a depth-first search starting at Vertex $A$. 
+
+\begin{itemize}
+    \item Vertex $A$ will be assigned a \verb!dfs_num! of $0$ since this is the first vertex that we're visiting. Moreover, $0$ is the smallest \verb!dfs_num! that is reachable from $A$ (all other vertices have their \verb!dfs_num! set to \verb!nil! or \verb!INFINITY!). Hence, we set \verb!dfs_num(A) = 0! and \verb!dfs_low(A) = 0!. 
+    \item Next, we visit vertex $B$. Vertex $B$ is assigned a \verb!dfs_num! of $1$ since it's the second vertex we're visiting. Moreover, Vertex $B$ has a \verb!dfs_low! value of $0$ since we can reach a vertex with a \verb!dfs_num! value of $0$ through the path $B \rightarrow C \rightarrow A$. Note that it would be invalid to say that the path $B \rightarrow A$ causes \verb!dfs_low(B)! to equal $0$ since we cannot go backwards in the depth-first search traversal. 
+    \item Applying similar reasoning, we find that vertex $C$ ends up with a \verb!dfs_num! value of $2$, and it also has a \verb!dfs_low! value of $0$ (we can reach vertex $A$).
+    \item Finally, vertex $B$ ends up with a \verb!dfs_num! value of $3$; however, no vertices with a lower \verb!dfs_num! value are reachable from $D$. Hence, the \verb!dfs_low! value of $D$ is also equal to $3$. Note that it is incorrect to say that $D$ has a \verb!dfs_low! value of $0$ through the path $D\rightarrow C\rightarrow A$ since we cannot revisit vertices while performing the depth-first search algorithm. 
+\end{itemize}
+
+
+Why do we care about these \verb!dfs_num! and \verb!dfs_low! values? It becomes more clear when we consider the depth-first search tree produced by calling the depth-first search algorithm. The quantity \verb!dfs_low(v)! represents the smallest \verb!dfs_num! value reachable from the current depth-first search spanning subtree rooted at the vertex $v$.  The value \verb!dfs_low(v)! can only be made smaller if there's a back edge (an edge from a vertex $v$ to an ancestor of $v$) in the depth-first search tree. \\
+
+This leads us to make the following observation: If there's a vertex $u$ with neighbor $v$ satisfying \verb!dfs_low(v) >= dfs_num(u)!, then we can conclude that vertex $u$ is an articulation point.  Note that this makes sense intuitively since it means that the \textit{smallest} numbered vertex that we can ever reach starting from vertex $v$ is greater than or equal to the number we assigned to $u$. Hence, removing $u$ would disconnect \verb!v! from any vertex with smaller \verb!dfs_num! than \verb!dfs_num(u)!. \\
+
+
+Going back to the previous graph figure, we can note that the following:
+\[
+\verb!3 = dfs_num(D) >= dfs_low(C) = 0!
+\]
+As stated previously, this implies that Vertex $C$ is an articulation point. Note that removing Vertex $C$ would disconnect the vertices $A$ and $B$ from Vertex $D$.  \\
+
+Now, there's one special case to this algorithm. The root of the depth-first search spanning tree (the vertex that we choose as the source in the first depth-first search call) is an articulation point only if it has more than one children. This one case is not detected by the algorithm; however, it is easy to check in implementation. \\
+
+% When actually implementing the algorithm, we can assign \verb!dfs_num! values ``on-the-fly" when we visit the vertex. A C++ implementation is provided below: \\
+
+% \begin{lstlisting}
+% int dfsCounter; /* Used to assign vertices their dfs_num value. */
+% int dfs_num[10000]; /* Stores the dfs_num values of each vertex. */
+% int dfs_lo[10000]; /* Stores the dfs_low values of each vertex. */
+% int color[10000]; /* Check if we've visited the vertex yet. */
+% int parent[10000]; /* We maintain the parent of a vertex so we don't update the dfs_low value with an already-visited vertex. */
+% bool isArticulationPoint[10000];
+
+
+% /* O(V + E) Articulation Point Algorithm. */
+% void dfs(int u, const vector<vector<int>>& AdjList) {
+%   color[u] = 1;
+%   dfs_num[u] = dfs_lo[u] = dfsCounter++;
+  
+%   for (int i = 0; i < AdjList[u].size(); i++) {
+%     int v = AdjList[u][i];
+%     if (!visited[v]) {
+%       /* Vertex v hasn't been visited. */
+%       parent[v] = u;
+%       dfs(v, AdjList);
+
+%       if (dfs_lo[v] >= dfs_num[u]) {
+%         // Vertex u is an articulation point. 
+%         isArticulationPoint[u] = true;
+%       }
+%       /* Update the dfs_lo value of u. */
+%       dfs_lo[u] = MIN(dfs_lo[u], dfs_lo[v]);
+%     } else if (color[v] == 1 && parent[u] != v) {
+%       /* (u, v) is a back edge in the depth-first search tree. */
+%       /* We've already visited vertex v, so we just update the dfs_lo value. */
+%       dfs_lo[u] = min(dfs_lo[u], dfs_num[v]);
+%     }
+%   }
+%   color[u] = 2;
+% }
+% \end{lstlisting}
+
