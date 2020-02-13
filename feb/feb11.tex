@@ -1,0 +1,89 @@
+\newpage
+\section{Tuesday, February 11, 2020}
+
+\subsection{Articulation Point Algorithm Implementation}
+
+Last time, we introduced the algorithm to find articulation points. Recall that if there's a vertex $u$ with neighbor $v$ satisfying \verb!dfs_low(v) >= dfs_num(u)!, then vertex $u$ is an articulation point. \\
+
+In terms of the depth-first search tree, the quantity \verb!dfs_low(v)! is the lowest value that you can reach by going down the depth-first search tree rooted at $v$ and possibly taking a back edge up (we can't visit the immediate parent of $v$). The inequality \verb!dfs_low(v) >= dfs_num(u)! implies that we cannot visit any vertex with \verb!dfs_num! less than \verb!dfs_num(u)! when we start a depth-first search from $v$ (there aren't any back edges that go to a vertex visited before vertex $u$). \\ 
+
+Furthermore, recall that the root of the depth-first search tree is an exception --- this vertex is an articulation point only if it has more than one child. \\
+
+When actually implementing this algorithm, we need to be clever in order to maintain a linear time complexity.  A pseudocode implementation is provided at \url{http://www.cs.umd.edu/class/spring2020/cmsc451/biconnected.pdf}. \\
+
+
+\subsection{Strongly Connected Components}
+
+
+Recall that an undirected graph $G = (V, E)$ is called \vocab{connected} provided that for any pair of vertices $u, v \in V$, there exits a path between $u$ and $v$. \\
+
+The corresponding analogue for connectivity in a directed graph is presented below:
+
+\begin{definition}
+We call a \textit{directed} graph \vocab{strongly connected} if, for every pair of vertices $u, v\in V$, there exists a directed path $u\leadsto p$.  
+\end{definition}
+
+We're often interested in checking whether or not a graph is strongly connected (e.g. starting from \textit{anywhere} in a directed graph, is it possible to reach \textit{everywhere} else?).  \\
+
+
+
+Like connected components in an undirected graph, strongly connected components in a directed graph form a partition of the set of vertices. This is formalized through the following result:
+
+\begin{lemma}
+[Klekleinberg and Tardos, 3.17]
+For any two nodes $s$ and $t$ in a directed graph, their strong components are either identical or disjoint.
+\end{lemma}
+
+\begin{proof}
+Consider any two nodes $s$ and $t$ that are mutually reachable. We claim that the strong components containing $s$ and $t$ are identical. This is clearly true due to the definition of a strongly connected component --- for any node $v$, if $s$ and $v$ are mutually reachable, then $t$ and $v$ are mutually reachable as well (we can always go $s\leadsto t \leadsto v$). Similarly, if $t$ and $v$ are mutually reachable, then $s$ and $v$ must be mutually reachable as well. \\
+
+Conversely, suppose $s$ and $t$ are \textit{not} mutually reachable. Then there cannot be a node $v$ in the strong component of both $s$ and $t$. Suppose such a node $v$ existed. Then $s$ and $v$ would be mutually reachable, and $v$ and $t$ would be mutually reachable. But this would imply that $s$ and $t$ are mutually reachable, which is a contradiction.
+\end{proof}
+
+A brute force algorithm to check whether a grpah is strongly connected is presented below:
+
+\begin{enumerate}
+    \item For each vertex $v \in V$ in our input graph $G = (V, E)$, perform a depth-first search starting with vertex $v$.
+    \item If there exists some vertex $u$ that we cannot from a vertex $v$, then we can conclude that $G$ is not strongly connected. 
+    \item If we finish iterating over all vertices with no issues, we can conclude that our graph is strongly connected.
+\end{enumerate}
+
+Since we perform $\mathcal{O}(V)$ depth-first search calls in the algorithm above, the runtime of this algorithm runs in $\mathcal{O}(V \times (V + E)) = \mathcal{O}(V^2 + VE)$ time on an Adjacency List. However, this is not as efficient as we can get. \\
+
+
+It turns out that we can solve the problem of determining whether a graph is strongly connected in linear time using two depth-first search calls. Before presenting this algorithm, we'll need the following terminology:
+
+\begin{definition}
+Given a directed graph $G = (V, E)$, the \vocab{transpose graph} of $G$ is the directed graph $G^{T}$ obtained by reversing the orientation of each edge from $(u, v)$  to $(v, u)$. 
+\end{definition}
+
+
+A summary of Kosaraju's algorithm is presented below:
+
+\begin{enumerate}
+    \item Pick an arbitrary vertex $v \in V$ in our initial graph $G = (V, E)$. 
+    \item Perform a depth-first search from $v$ and verify that every other vertex in the graph can be reached from $v$. If there exists some vertex $u$ that cannot be reached from $v$, then we can immediately conclude that $G$ is not strongly connected.
+    \item Compute $G^{T}$, the transpose graph of $G^{T}$. Perform a depth-first search on $G^{T}$ with the same source vertex $v$. If we can reach every vertex from $v$ in $G^{T}$ as well, then we can conclude that $G$ is strongly connected.
+\end{enumerate}
+
+
+Why does this work? Because a graph and its transpose always have the same connected components (for each directed $u\leadsto v$ path, we can just go in the reverse direction). \\
+
+
+
+Now, this algorithm tells us \textit{if} a graph is strongly connected; however, it doesn't tell us \textit{what} the strongly connected components are (i.e. if a graph has many strongly connected components, which component does an arbitrary vertex $v$ belong in?). To answer this question, we'll first present a way to classify the edges in a depth-first search tree. \\
+
+
+We will see that this edge-classification system is very closely related to finding strongly connected components in a graph.
+
+\subsection{Classifying Edges in a DFS Tree}
+
+While performing a depth-first search traversal, we generate a depth-first search spanning tree. In particular, this DFS tree's root is the source vertex from which we started the DFS traversal, and we add the edge $(u, v)$ if we traverse the edge $(u, v)$ during the DFS procedure.  \\
+
+Within the depth-first search tree, we can classify each edge into exactly one of four disjoint categories: 
+
+\begin{enumerate}
+    \item \vocab{Tree edges} are edges traversed by the depth-first search traversal (i.e. they are neighbors in the original graph, and we go from one of the vertices to the other). These are the only type of edges that are actually explored. 
+    \item \vocab{Back edges} are edges that are part of a cycle in the original graph. In particular, a back edge is an edge $(u, v)$ that we discover when we have started (but not finished) a DFS traversal from $v$ and we're exploring the neighbors of vertex $u$.  
+    \item \vocab{Forward edges} and \vocab{cross edges} are edges of the form $(u,  v)$ where we have started (but not finished) the depth-first search traversal from $u$, and we find a vertex $v$ that has already been fully explored.
+\end{enumerate}

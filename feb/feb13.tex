@@ -1,0 +1,247 @@
+\newpage
+
+\section{Thursday, February 13, 2019}
+
+Last time, we started discussing strongly connected components, and we presented an edge-classification system. Today, we'll show how we can use our edge-classification system to identify what vertices lie in strongly connected components.
+
+
+\subsection{Kosaraju's Algorithm}
+
+Now, we'll show how we can identify strongly connected components in linear time. The algorithm that we will describe is \vocab{Kosaraju's algorithm}. \\
+
+The pseudocode corresponding to the algorithm is presented below: 
+
+
+\begin{lstlisting}
+procedure kosarajuSCC(graph G) {
+    
+    for each node v in G: 
+        color v gray.
+        
+    let L be an empty list.
+    for each node v in G:
+        if v is gray:
+            run DFS starting at v, appending each node to list L when it is we've finished processing that node.
+    
+    let G' be the transpose graph of G
+    
+    for each node v in G':
+        color v gray.
+        
+    let SCC be a new array of length n.
+    let index = 0
+    
+    for each node in v in L, in reverse order:
+        if v is gray:
+            run DFS on v in G' and set scc[u] = index
+            for each node u visited during the traversal.
+        index = index + 1
+    
+    
+    return scc
+}
+\end{lstlisting}
+
+
+How is this working?
+
+\begin{enumerate}
+    \item Firstly, we look at the original graph $G = (V, E)$, and we perform a depth-first search on the components of $G$. Once we've finished visiting each node $v$, we append $v$ to the end of a list $L$ (we are placing the vertices into $L$ in \hyperlink{https://en.wikipedia.org/wiki/Topological_sorting}{reverse-topological order}). The list $L$ ends up being sorted in reverse-order of finishing time. The entire purpose of this first depth-first search traversal is to be able to number the vertices according to their finish time.   
+    \item Next, we'll construct the transpose graph $G^{T}$, and we'll iterate over $L$ in reverse-order. Recall that the strongly connected components in $G^{T}$ are exactly the same as those in $G$. Also, we mark each 
+    \item For each vertex $v$ we visit in $L$, if we haven't already call DFS on while iterating over $L$, any set of vertices that we visit forms a strongly connected component. 
+\end{enumerate}
+
+Some more intuition is provided below. \\
+
+Note that, when performing a depth-first search in $G^{T}$ in post-order from a node $v$, the depth-first search first visits nodes that can reach $v$ followed by $v$ itself, and finally followed by nodes that cannot reach $v$. On the other hand, when we perform a depth-first search in pre-order on the original graph $G$ from a node $v$, the depth-first search first visits $v$, followed by any nodes reachable from $v$, and finally the nodes that are not reachable from $v$. \\
+
+
+\subsection{Topological Sorting}
+
+Next, we'll begin discussing our next problem. First, we'll present a couple of definitions.
+
+\begin{definition}
+A \vocab{directed acyclic graph}, also known as a ``DAG," is (as its name suggests), a directed graph that doesn't have any cycles.
+\end{definition}
+
+
+\begin{definition}
+A \vocab{topological sort} of a directed acyclic graph $G = (V, E)$ is a linear ordering of all its vertices such that if $G$ contains an edge $(u, v)$, then $u$ precedes $v$ in the ordering.
+\end{definition}
+
+
+Clearly, a graph with a cycle cannot be topologically sorted --- we wouldn't be able to order the vertices that form the cycle. 
+
+
+It's important to remember that, unlike number sorting algorithms, topological sorts are not unique. Each graph $G$ can have multiple valid topological sorts. \\
+
+
+Topological sorts are really helpful when we're considering a graph that represents precedences among events or objects. Here are a few examples:
+
+
+\begin{example}
+[Figure 22.7, CLRS]
+Professor Bumstead gets dressed in the morning. The professor must wear certain garments before others (e.g. socks before shoes), whereas other pairs of items can be put on in any order (e.g. socks and pants). We can represent this situation with a directed acyclic graph $G = (V, E)$ in which a directed edge $(u, v)$ indicates that garment $u$ must be donned before garment $v$. The professor can topologically sort this graph in order to get a valid order for getting dressed.
+\end{example}
+
+Here's another example.
+
+\begin{example}
+[Pick-up Sticks]
+The game of \textit{pick-up sticks} involves two players. The game consists of dropping a bundle of sticks. Subsequently, players take turns trying to remove sticks without disturbing any of the others. In order to model this game, we can use a directed graph $G = (V, E)$ in which each vertex represents a stick. We place a directed edge $(u, v)$ between sticks $u$ and $v$ if stick $u$ is on top of stick $v$. By topologically sorting the graph, we can find a valid way to pick up the sticks on top first.
+\end{example}
+
+Now, we've seen a couple of examples in which topological sorts can be useful, but how do we perform a topological sort?  \\
+
+
+It turns out we can topologically sort a graph in linear time. We will present two algorithms. \\
+
+
+Firstly, we present \vocab{Kahn's algorithm}, which relies on the following fact:
+
+
+\begin{proposition}
+Every directed acyclic graph has at least one vertex with in-degree $0$.
+\end{proposition}
+\begin{proof}
+Suppose not. For each vertex $v$, we can move backwards through an incoming edge. But due to the finiteness of the graph $G$ and absence of a cycle, this process must eventually terminate. The vertex we terminate must have in-degree $0$.
+\end{proof}
+
+Now that we've established this fact, a summary of Kahn's algorithm is presented below:
+
+\begin{enumerate}
+    \item Enqueue all vertices with in-degree $0$ into a priority queue $Q$. At least one such vertex must exist due to Proposition $6.5$. 
+    \item Let $L$ be an empty list. This will store our vertices in topologically sorted order. 
+    \item While the $Q$ isn't empty, extract the next vertex $u$ from $Q$. Remove the vertex $u$ from the original graph $G$ along with any incident edges, and add $u$ to $L$. If this removal causes another vertex $v$ to have in-degree $0$, then enqueue $v$ into $Q$. 
+    \item Once the while-loop terminates, $L$ will contain every vertex in topologically sorted order. 
+\end{enumerate}
+
+
+While we won't prove correctness for this algorithm, it should be a little clear as to why it works. Since we're always choosing vertices with in-degree $0$, we know that there is no other vertex that should come before the vertex we're choosing. Hence, the vertices we pick are always ``safe." This is pretty similar to the selection sort algorithm used to sort numbers in which we repeatedly pick the minimum element in an array to place at the front of the array. This algorithm runs in $\mathcal{O}(V + E)$ time on an adjacency list. \\
+
+
+Here's a second algorithm that correctly performs a topological sort. This is just a slight modification to the DFS algorithm. 
+
+\begin{enumerate}
+    \item Let $G = (V, E)$ be our original graph. Mark each vertex $v\in V$ as ``unvisited." 
+    \item For each unvisited vertex, call \verb!DFS(v)!, and 
+    prepend \verb!v! into an array \verb!A! once we've finished visiting all of its neighbors. 
+    \item Once we've finished visiting every vertex in $G$, the array \verb!A! will be in reverse-topological order. We can reverse the array in linear time, and we're done. 
+\end{enumerate}
+
+This algorithm runs in $\mathcal{O}(V + E)$ time as the runtime is dominated by our depth-first search calls. \\
+
+
+Once again, we won't prove correctness of this algorithm, but it should be clear why this algorithm works. Our call to depth-first search will end pushing vertices with out-degree $0$ onto the stack first (because they won't have any more neighbors to visit), which are always safe to place at the end of the topological ordering since no vertex is ``greater" than them. This is followed by other vertices in ascending order of out-degree. \\
+
+
+A C++ implementation of this algorithm is presented below:
+
+
+
+\lstset{frame=tb,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  language=C++,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\begin{lstlisting}
+vector<vector<int>> AdjList; /* Our graph. */
+vector<int> toposort; /* Global array to store topological sort. */
+bool visited[10000];
+
+void dfs(int u) {
+    visited[u] = true;
+    for (int i = 0; i < AdjList[u].size(); i++) {
+        int v = AdjList[u][i];
+        if (!visited[v]) {
+            dfs(v);
+        }
+    }
+    toposort.push_back(u);
+}
+
+int main(void) {
+    memset(visited, false, sizeof(visited));
+    for (int i = 0; i < V; i++) {
+        if (!visited[i]) {
+            dfs(i);
+        }
+    }
+    reverse(toposort.begin(), toposort.end());
+    /* Topological sort is complete. */
+}
+\end{lstlisting}
+
+
+
+
+\subsection{Bipartite Graphs}
+
+Finally, we'll discuss bipartite graphs.
+
+\begin{definition}
+A graph $G = (V, E)$ is called \vocab{bipartite} if we can partition its vertex set $V$ into two disjoint sets $U$ and $V$ such that each edge $(u, v) \in E$ has one endpoint in $U$ and the other endpoint in $V$.  
+\end{definition}
+
+Here's an equivalent definition that we sometimes like to use:
+
+\begin{definition}
+A graph $G = (V, E)$ is said to be \vocab{bipartite} if we can color each vertex either black or white such that no two adjacent vertices have the same color.  
+\end{definition}
+
+
+In order to test whether a graph is bipartite, we can perform a graph search in which we color vertices as we go along. Although we can use either breadth-first search or depth-first search for this check, breadth-first search is often the more natural approach. Pretty much, we start by coloring the source vertex with value $0$, color the direct neighbors of the source vertex with $1$, the neighbors of the neighbors of the source vertex with color $0$, and so on. If we encounter any violations (i.e. two adjacent vertices with the same color) as we go along, then we can conclude that the given graph is not bipartite. \\
+
+
+A C++ implementation is provided below:
+
+
+\begin{lstlisting}
+vector<vector<int>> AdjList; /* Our graph. */
+
+bool isBipartite(int src) {
+    queue<int> q;
+    q.push(src);
+    vector<int> color(V, INFINITY); 
+    color[src] = 0;
+    bool isBipartite = true;
+    
+    while (!q.empty() && isBipartite) {
+        int u = q.front(); q.pop();
+        
+        for (int i = 0; i < AdjList[u].size(); i++) {
+            int v = AdjList[u][i];
+            if (color[v] == INFINITY) {
+                /* We haven't colored v yet. */
+                color[v] = 1 - color[u];
+                q.push(v); 
+            } else if (color[v] == color[u]) {
+                /* We've found a violation. */
+                isBipartite = false;
+                break;
+            }
+        }
+    }
+    return isBipartite;
+}
+\end{lstlisting}
+
+The runtime of this algorithm is dominated is $\mathcal{O}(V + E)$ on an adjacency list since we're just performing a breadth-first search. \\
+
+Another useful fact regarding bipartite graphs is the following:
+
+\begin{fact}
+A graph is bipartite if and only if it has no odd cycles (i.e. cycles of length $3, 5, 7,$ etc).
+\end{fact}

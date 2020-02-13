@@ -61,7 +61,7 @@ Why are articulation points important? One example in which searching for articu
 This naive algorithm calls the depth-first search or breadth-first search algorithm $\mathcal{O}(V)$ times. Hence, it runs in $\mathcal{O}(V \times (V + E)) = \mathcal{O}(V^2 + VE)$ time. \\
  
  
-While this algorithm \textit{works}, it is not as efficient as we can get. We will now describe a linear-time algorithm that runs the depth-first search algorithm just \textit{once} to identify all articulation points and bridges. \\
+While this algorithm \textit{works}, it is not as efficient as we can get. We will now describe a linear-time algorithm that runs the depth-first search algorithm just \textit{once} to identify all articulation points and bridges. This algorithm is often accredited to Hopcraft and Tarjan. \\
  
  
 In this modified depth-first search, we will now maintain two numbers for each vertex $v$: \verb!dfs_num(v)! and \verb!dfs_low(v)!. The quantity \verb!dfs_num(v)! represents a label that we will assign to nodes in an increasing fashion. For instance, the vertex from which we call depth-first search would have a \verb!dfs_num! of $0$. The subsequent vertex we visit would be assigned a \verb!dfs_num! of $1$, and so on. \\
