@@ -194,19 +194,25 @@ class UnionFind {
 
 \subsection{Analysis of Union-Find Operations}
 
-We won't derive 
+
+In order to discuss the running time of each of the union-find operations, we will need to use the \vocab{inverse Ackermann function}, denoted $\alpha(n)$. For our purposes, all we need to know is that this is an \textit{extremely} slowly growing function (for all practical purposes, its value never exceeds $5$). \\
+
+While we won't derive the bound, we will take it for granted that the \verb!UNION! and \verb!FIND-SET! operations run in $\mathcal{O}(\alpha(n))$ time (approximately constant time). A full derivation is provided in CLRS $21.4$. 
 
 
 
 \subsection{The Minimum Spanning Tree Problem}
 
-The \vocab{minimum spanning tree} problem is stated below:
+The \vocab{minimum spanning tree} problem is stated below: \\
+
+
+This is incomplete. I will add it in later.
 
 
 
-
+\iffalse
 \subsubsection{Kruskal's Algorithm}
 
 First, we'll discuss Kruskal's algorithm, which works by repeatedly finding a safe edge to add to the growing forest. In particular, this algorithm works by As stated in CLRS, ``Kruskal's algorithm qualifies as a greedy algorithm because, at each step, it adds to the forest an edge of least possible weight." \\
 
-A 
+\fi
