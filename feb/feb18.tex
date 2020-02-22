@@ -7,6 +7,9 @@ Last time, we finished graph algorithms. Today, we'll begin \vocab{greedy algori
 
 \subsection{The Union-Find Data Structure}
 
+\subsubsection{Motivating the Union-Find Data Structure}
+
+
 Before we introduce Kruskal's algorithm, we'll need to first introduce a data structure known as the \vocab{union-find} or \vocab{disjoint-set} data structure. Why? Because this data structure is used in the implementation of Kruskal's algorithm, which is one of the two minimum spanning tree algorithms we will be talking about. \\
 
 The union-find data structure consists of a collection of disjoint sets (i.e. a set of sets). Each disjoint set is uniquely determined by a \vocab{set representative}, which is some member of the set. In most applications, it doesn't actually matter which member of the set is used as the representative; all we care is that, if we ask for the representative of a set twice without making any modifications, we should get the same answer both times. \\
@@ -24,7 +27,6 @@ There are several applications of the union-find data structure. One of the many
 
 
 Consider the following pseudocode: 
-
 
 \vspace{1em}
 \begin{center}
@@ -97,7 +99,7 @@ How does these functions work?
     \item Finally, we can call the \verb!SAME-COMPONENT! function with two vertices $u$ and $v$ which simply compare the representatives of the sets $u$ and $v$ are in to determine whether the two vertices are in the same component.
 \end{itemize}
 
-\subsection{Implementation of the Union-Find Data Structure}
+\subsubsection{Implementation of the Union-Find Data Structure}
 
 In our connected components example, we use a union-find data structure, but we never explain how the functions \verb!MAKE-SET!, \verb!UNION!, or \verb!FIND-SET! are implemented. In this section, we'll discuss how to implement these three methods. \\
 
@@ -162,7 +164,7 @@ class UnionFind {
             return u;
         }
         /* Path compression heuristic. */
-        parent[u] = findSet(parent[u]);
+        return parent[u] = findSet(parent[u]);
     }
     
     /* inSameSet(u, v) returns true if u and v are in the same set; false otherwise. */
@@ -187,12 +189,11 @@ class UnionFind {
             }
         }
     }
-
 };
 \end{lstlisting}
 
 
-\subsection{Analysis of Union-Find Operations}
+\subsubsection{Analysis of Union-Find Operations}
 
 
 In order to discuss the running time of each of the union-find operations, we will need to use the \vocab{inverse Ackermann function}, denoted $\alpha(n)$. For our purposes, all we need to know is that this is an \textit{extremely} slowly growing function (for all practical purposes, its value never exceeds $5$). \\
@@ -203,16 +204,196 @@ While we won't derive the bound, we will take it for granted that the \verb!UNIO
 
 \subsection{The Minimum Spanning Tree Problem}
 
-The \vocab{minimum spanning tree} problem is stated below: \\
+\subsubsection{Problem Statement}
+
+The \vocab{minimum spanning tree} problem is stated as follows: 
+\begin{quote}
+    ``Given a graph $G = (V_1, E_1)$, find a connected subgraph $H = (V_2, E_2)$ such that $V_1 = V_2$ and the quantity
+    \[
+    \sum_{(u, v) \in E_2} \texttt{weight}(u, v)
+    \]
+    is as minimal as possible." 
+\end{quote}
+
+The following proposition shows that $H$ will always be a tree:
+
+\begin{proposition}
+If $H = (V_2, E_2)$ is a connected subgraph of $G = (V_1, E_1)$ with the properties described above, then $H$ is a tree.  
+\end{proposition}
+\begin{proof}
+By definition, $H$ must be connected. Thus, it suffices to show that $H$ doesn't have any cycles. Suppose $H$ contained a cycle $C$. Let $e$ be an edge on $C$, and consider the graph $H \setminus \{e\}$. This graph is still connected since removing an edge in a cycle can't disconnect a graph, but this graph is also ``cheaper" than $H$; this is a contradiction.
+\end{proof}
+
+A simple brute force algorithm to find the minimum spanning tree would work by generating each possible spanning tree and storing the generated tree if its cost is less than our previously stored minimum. Unfortunately, this algorithm is not feasible since graph has exponentially many different spanning trees. Thus, we are compelled to look for more efficient solutions.  \\
+
+Tody, we will discuss \vocab{Kruskal's algorithm} and \vocab{Prim's algorithm}, both of which are used to find the minimum spanning tree of a graph.  \\
+
+Both of these algorithms are classified as \vocab{greedy algorithms} --- they repeatedly make locally optimal choices in an attempt to find a globally optimal solution.
 
 
-This is incomplete. I will add it in later.
-
-
-
-\iffalse
 \subsubsection{Kruskal's Algorithm}
 
-First, we'll discuss Kruskal's algorithm, which works by repeatedly finding a safe edge to add to the growing forest. In particular, this algorithm works by As stated in CLRS, ``Kruskal's algorithm qualifies as a greedy algorithm because, at each step, it adds to the forest an edge of least possible weight." \\
+Let $S$ be an initially empty set, and let $G = (V, E)$ be our graph. Kruskal's algorithm works by iteratively adding edges the least weight to $S$ as long as $(u, v)$ does not form a cycle with any of the other edges in $S$. The algorithm terminates when adding any edge in $E \setminus S$ to $S$ would result in a cycle. \\
 
-\fi
+How do we quickly check if adding an edge $(u, v)$ to $S$ will result in a cycle? This can be done quite easily using the union-find data structure. \\
+
+The pseudocode for Kruskal's algorithm is below:
+
+
+\vspace{1em}
+\begin{center}
+\line(1,0){400}
+\end{center}
+
+\begin{allintypewriter}
+\# Input: A graph G.
+
+\hspace{0cm}
+
+\# Output: A set of edges that form a minimum spanning tree of G.
+
+\hspace{0.5cm}
+
+
+KRUSKAL(G) \string{ 
+
+\hspace{0.5cm} let S be an empty set.
+
+\hspace{0cm}
+
+\hspace{0.5cm} for each vertex v $\in$ G \string{
+
+\hspace{1cm} MAKE-SET(v) 
+
+\hspace{0.5cm} \string}
+
+\hspace{0cm}
+
+\hspace{0.5cm} sort the edges in G.Edges into nondecreasing order by weight.
+
+\hspace{0cm}
+
+\hspace{0.5cm} for each edge (u, v) $\in$ G.Edges taken in sorted order \string{
+
+\hspace{1cm} if FIND-SET(u) != FIND-SET(v) \string{
+
+\hspace{1.5cm} \# (u, v) won't form a cycle.
+
+\hspace{1.5cm} Add the edge (u, v) to S.
+
+\hspace{1.5cm} UNION(u, v)
+
+\hspace{1cm} \string}
+
+\hspace{0.5cm} \string}
+
+\hspace{0.5cm} return S
+
+\string}
+
+\hspace{0cm}
+
+\end{allintypewriter}
+\begin{center}
+\line(1,0){400}
+\end{center}
+
+As mentioned earlier, there isn't too much to this algorithm:
+
+\begin{enumerate}
+    \item First, we sort the edges in non-decreasing order by weight so that we can traverse the list of edges from lowest weight to highest weight.
+    \item For each weight we look at, we check whether we can add the weight without adding a cycle. This is done by maintaining a union-find data structure.
+    \item Finally, we return the set of edges that form our minimum spanning tree. 
+\end{enumerate}
+
+
+How fast is Kruskal's algorithm? Firstly, note that the first for-loop performs $V$ \verb!MAKE-SET! operations. Subsequently, we sort the list of edges; doing so requires $\mathcal{O}(E\log(E))$ time. Finally, the second for-loop performs $O(E)$ \verb!FIND-SET! and \verb!UNION! operations. Putting everything together, we have a runtime of $\mathcal{O}((V + E)\alpha(V))$ time. But since $\alpha(|V|) = \O(\log(V)) = \O(\log(E))$ (where the second equality follows due to the fact that $|E| \geq |V| - 1$ in a connected graph), the total running time of Kruskal's algorithm as $\mathcal{O}(E\log(E))$.
+
+
+\subsubsection{Prim's Algorithm}
+
+Prim's algorithm works by starting with an empty set $S$ and iteratively adding edges to $S$ until our minimum spanning tree is complete. We start by adding an arbitrary vertex to $S$, and at each step we add a vertex that is connected to some other vertex in $S$. \\
+
+
+Some pseudocode illustrating how Prim's algorithm works is shown below:
+
+\vspace{1em}
+\begin{center}
+\line(1,0){400}
+\end{center}
+
+\begin{allintypewriter}
+\# Input: A graph G and a source vertex v.
+
+\hspace{0cm}
+
+\# Output: A set S containing the edges that represent a minimum 
+
+\# spanning tree.
+
+\hspace{0.5cm}
+
+
+PRIM(G, v) \string{ 
+
+\hspace{0.5cm} let key[1...V] be an array.
+
+\hspace{0.5cm} let Q be an empty minimum priority queue
+
+\hspace{0cm} 
+
+\hspace{0.5cm} for each vertex u $\in$ G \string{
+
+\hspace{1cm} key[u] = $\infty$
+
+\hspace{1cm} parent[u] = NIL
+
+\hspace{1cm} enqueue u into Q.
+
+\hspace{0.5cm} \string}
+
+\hspace{0.5cm} key[v] = 0
+
+\hspace{0.5cm} 
+
+\hspace{0.5cm} \# This is the main loop.
+
+\hspace{0.5cm} while Q isn't empty \string{
+
+\hspace{1cm} let u = EXTRACT-MIN(Q)
+
+\hspace{1cm} for each vertex v in Adj[u] \string{
+
+\hspace{1.5cm} if v $\in$ Q and weight(u, v) < key[v] \string{
+
+\hspace{2cm} key[v] = weight(u, v)
+
+\hspace{2cm} parent[v] = u
+
+\hspace{1.5cm} \string}
+
+\hspace{1cm} \string}
+
+\hspace{0.5cm} \string}
+
+\string}
+\end{allintypewriter}
+\begin{center}
+\line(1,0){400}
+\end{center}
+
+How does this algorithm work?
+
+\begin{itemize}
+    \item We start building our minimum spanning tree from an arbitrary vertex $v$. This vertex is passed in as a parameter to our function.
+    \item Next, we process enqueue all of our vertices into a minimum priority queue $Q$ which allows us to extract elements with the minimum \verb!key! value in logarithmic time. 
+    \item While $Q$ isn't empty, we take the vertex with the smallest \verb!key! value from $Q$; denote this vertex by $u$. Note that, on the first iteration, the vertex we grab is always $v$. 
+    \item For each neighbor $v$ of $u$, we check whether the edge $(u, v)$ is cheaper than the stored \verb!key! value of $v$. If so, we update the key value of $v$ to the weight of edge \verb!(u, v)!. We additionally store the vertex $u$ from which we took $v$. 
+\end{itemize}
+
+The purpose of the minimum priority queue is to iteratively identify the cheapest edge that we can add to our minimum spanning tree. The \verb!key! value of a vertex $v$ represents the ``cheapest" amount that we can pay in order to add that vertex to our spanning tree. \\
+
+Prim's algorithm greedily selects the pair $(u, v)$ in front of the priority queue---which has the minimum weight $w$---if the end point of this edge, namely $v$, has not been taken before. When the \verb!while! loop terminates, the minimum spanning tree consists of the set of edges
+\[
+A = \{(v, \verb!parent![v]) \mid v\in V - \{r\} - Q\}.
+\]
