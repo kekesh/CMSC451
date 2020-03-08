@@ -1,11 +1,73 @@
+\newpage
 \section{Thursday, February 27, 2020}
+Last time, we introduced the matrix multiplication problem whose brute force solution runs in $\O(n^3)$ time. Today, we'll introduce \vocab{Strassen's algorithm}, a quicker solution to the matrix multiplication problem.
 
 
-\subsection{Matrix Multiplication}
-Strassen's algorithm works by 
+\subsection{Strassen's Algorithm}
+
+Suppose we want to compute the matrix product $\mathbf{C} = \mathbf{A}\mathbf{B}$. Strasen's algorithm is a divide-and-conquer algorithm that works by partitioning the three matrices $\mathbf{A}, \mathbf{B}$, and $\mathbf{C}$ into equally sized block matrices as follows: \\
+
+\[
+\mathbf{A} = \begin{pmatrix}
+\mathbf{A}_{1,1} & \mathbf{A}_{1,2} \\
+\mathbf{A}_{2, 1} & \mathbf{A}_{2,2}
+\end{pmatrix} \hspace{1cm} 
+\mathbf{B} = \begin{pmatrix}
+\mathbf{B}_{1,1} & \mathbf{B}_{1,2} \\
+\mathbf{B}_{2, 1} & \mathbf{B}_{2,2}
+\end{pmatrix} \hspace{1cm} 
+\mathbf{C} = \begin{pmatrix}
+\mathbf{C}_{1,1} & \mathbf{C}_{1,2} \\
+\mathbf{C}_{2, 1} & \mathbf{C}_{2,2}
+\end{pmatrix} 
+\]
+
+
+Our naive algorithm would compute the following quantities:
+
+\begin{enumerate}
+    \item $\mathbf{C}_{1,1} = \mathbf{A}_{1,1} \mathbf{B}_{1,1} + \mathbf{A}_{1,2}\mathbf{B}_{2,1}$, 
+    \item $\mathbf{C}_{1,2} = \mathbf{A}_{1,1} \mathbf{B}_{1,2} + \mathbf{A}_{1,2}\mathbf{B}_{2,2}$, 
+    \item $\mathbf{C}_{2,1} = \mathbf{A}_{2,1} \mathbf{B}_{1,1} + \mathbf{A}_{2,2}\mathbf{B}_{2,1}$, 
+    \item $\mathbf{C}_{2,2} = \mathbf{A}_{2,1} \mathbf{B}_{1,2} + \mathbf{A}_{2,2}\mathbf{B}_{2,2}$, 
+\end{enumerate}
+
+
+With this construction, however, we require $8$ total multiplications to calculate our matrix. Strassen's algorithm works by cleverly rewriting some of these expressions so that we only require $7$ multiplications (similar to how Karatsuba's algorithm for large-integer multiplication). More precisely, we define the following matrices:
+
+\begin{enumerate}
+    \item $\mathbf{M}_{1} \defeq (\mathbf{A}_{1,1} + \mathbf{A}_{2,2})(\mathbf{B}_{1,1} + \mathbf{B}_{2,2})$,
+    \item $\mathbf{M}_{2} \defeq (\mathbf{A}_{2,1} + \mathbf{A}_{2,2})\mathbf{B}_{1,1}$, 
+    \item $\mathbf{M}_{3} \defeq \mathbf{A}_{1,1}(\mathbf{B}_{1,2} - \mathbf{B}_{2,2})$,
+    \item $\mathbf{M}_{4} \defeq \mathbf{A}_{2,2}(\mathbf{B}_{2,1} - \mathbf{B}_{1,1})$,
+    \item $\mathbf{M}_{5} \defeq (\mathbf{A}_{1,1} + \mathbf{A}_{1,2})\mathbf{B}_{2,2}$
+    \item $\mathbf{M}_{6} \defeq (\mathbf{A}_{2,1} - \mathbf{A}_{1,1})(\mathbf{B}_{1,1} + \mathbf{B}_{1,2})$,
+    \item $\mathbf{M}_{7} \defeq (\mathbf{A}_{1,2} - \mathbf{A}_{2,2})(\mathbf{B}_{2,1} + \mathbf{B}_{2,2})$.
+\end{enumerate}
+
+Note that computing the values of these matrices requires only $7$ multiplications (one for each $M_{k})$ instead of the usual $8$. We can now express our block matrices in terms of the $M_{k}$ matrices as follows:
+
+\begin{enumerate}
+    \item $\mathbf{C}_{1,1} = \mathbf{M}_{1} + \mathbf{M}_{4} - \mathbf{M}_{5} + \mathbf{M}_{7}$,
+    \item $\mathbf{C}_{1,2} = \mathbf{M}_{3} + \mathbf{M}_{5}$,
+    \item $\mathbf{C}_{2,1} = \mathbf{M}_{2} + \mathbf{M}_{4}$
+    \item $\mathbf{C}_{2,2} = \mathbf{M}_{1} - \mathbf{M}_{2} + \mathbf{M}_{3} + \mathbf{M}_{6}$.
+\end{enumerate}
+
+
+We can iterate the procedure of dividing our matrices into blocks recursively until the submatrices are just numbers. \\
+
+How fast does Strassen's algorithm run? Let $f(n)$ denote the number of multiplication operations we perform on a $2^{n}\times 2^{n}$ matrix. By the recursive application of Strassen's algorithm, we find $f(n) = 7f(n - 1) + c4^{n}$, where $c$ is some positive constant that depends on the number of additions performed at each step of the operation. Thus, we find $f(n) = (7 + o(1))^{n}$. Letting $N = 2^{n}$, we conclude that Strassen's algorithm runs in $\mathcal{O}(N^{\log_{2}(7) + o(1)})  \approx \mathcal{O}(N^{2.8074})$ time. \\
 
 
 \subsection{Closest Pair of Points}
 
-x'[
-]
+The closest pair of points problem is stated as follows:
+
+\begin{quote}
+    Given $n$ points in the plane $p_1, p_2, p_3, \ldots, p_n$, find two points $p_i$ and $p_j$ such that the Euclidean distance between $p_i$ and $p_j$ is minimal. 
+\end{quote}
+
+A simple brute force solution is to consider all ${n\choose 2}$ pairs of points, and keep track of the minimum distance value seen so far (this \verb!minimum! variable would initially be set to $\infty$). The runtime of this algorithm is $\mtahcal{O}(n^2)$ since computing the distance between two points is a constant-time operation. \\
+
+Next class, we'll present a more efficient solution. 
