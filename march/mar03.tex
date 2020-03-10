@@ -5,13 +5,163 @@
 Recall the closest pair of points problem:
 
 \begin{quote}
-    Given $n$ points in the plane, find the pair whose Euclidean distance is minimal.
+    Given $n$ points in the plane $P = \{p_1, p_2, p_3, \ldots, p_n\}$, find two points $p_i$ and $p_j$ such that the Euclidean distance between $p_i$ and $p_j$ is minimal. 
 \end{quote}
 
-Last time, we discussed a brute force $\mathcal{O}(n^2)$ solution to this problem. Today, we'll see a more efficient 
+
+Last time, we discussed a brute force $\mathcal{O}(n^2)$ solution to this problem. Today, we'll see a more efficient solution. We'll also introduce two new problems.
 
 \subsection{Closest Pair of Points}
-x
 
-\subsection{Fast Fourier Transforms}
+Our plan is to use a divide and conquer approach. We'll find the closest pair among the points in the ``left half" of our plane, and we'll find the closest pair of points in the ``right half" of our plane. Using this information, we'll construct our final answer in linear time. If we develop an algorithm with this structure, then our recurrence will have an $\mathcal{O}(n\log(n))$ solution. Note that our ``combining" phase is more tricky than it seems: we haven't considered the case in which one point is in the left half of the plane and another point is in the right half of the plane.  \\
 
+Before any recursion begins, we sort all of our points in $P$ by $x$-coordinate and again by $y$-coordinate, producing two lists $P_x$ and $P_y$. Moreover, we define $Q$ to be the set of points in the first $\lceil n/2 \rceil$ positions of $P_x$ (i.e. the ``left half" of the plane), and we let $R$ be the set of points in the final $\floor{n/2}$ positions of $P_x$ (i.e. the ``right half" of the plane). \\
+
+
+With a single for-loop, we can iterate over $P_x$ and $P_y$ and create the lists $Q_x$, consisting of the points in $Q$ sorted by increasing $x$-coordinate, $Q_y$, the set of points in $Q$ sorted by increasing $y$-coordinate, and analogous lists for $R_x$ and $R_y.$ \\
+
+\subsubsection{Combining the Solutions}
+
+Suppose $q_0$ and $q_1$ are returned as a closest pair of points in $Q$. Moreover, suppose $r_0$ and $r_1$ are returned as a closest pair of points in $R$. How do we combine our solution to get the closest pair of points in the plane? First, we need to introduce some more notation. \\
+
+Let $\delta$ be the minimum distance between $q_0$ and $q_1$ and between $r_0$ and $r_1$. That is, let $\delta \defeq \min\{d(q_0, q_1), d(r_0, r_1)\}$. We want to figure out whether there exist points $q\in Q$ and $r\in R$ such that $d(q, r) < \delta$ (if no such points exists, then $\delta$ is our answer; otherwise, $q$ and $r$ are even closer points in our plane). \\
+
+Let $x^{\star}$ denote the rightmost $x$-coordinate in $Q$, and let $L$ denote the vertical line $x = x^{\star}$. This line $L$ separates the sets $Q$ and $R$ in the sense that any point in $Q$ is either on the line or to the left of the line, and any point in $R$ is strictly to the right of the line. \\
+
+The following key observation is used to help us combine our solutions:
+
+\begin{proposition}
+[Existence of a Better Solution]
+If there exists $q \in Q$ and $r \in R$ for which $d(q, r) < \delta$, then each of $q$ and $r$ lies within a distance of $\delta$ within the line $L$. 
+\end{proposition}
+\begin{proof}
+Suppose such $q$ and $r$ exist. The inequality $q_x \leq x^{\star} \leq r_x$ implies
+\[
+x^{\star} - q_x \leq r_x - q_x \leq d(q, r) < \delta,
+\]
+which yields
+\[
+r_x - x^{\star} \leq r_x - q_x \leq d(q, r) < \delta.
+\]
+However, this means precisely that each $q$ and $r$ has an $x$-coordinate within $\delta$ of $x^{\star}$. Hence, they lie within distance $\delta$ of $L$.  
+\end{proof}
+
+
+The immediate consequence of Proposition $11.1$ is that, once we've found the two closest pairs of points from our recursive calls, we only need to search for a better solution within a strip of length $\delta$ of the line $L$. We now present a method to do this in linear time.  \\
+
+Let $S \subseteq P$ be the set of points in $P$ within $\delta$ of $L$. Let $S_y$ denote the list consisting of the points in $S$ sorted by increasing $y$-coordinate. We can now restate Proposition $11.1$ in terms of $S$ as follows:
+
+\begin{quote}
+    There exist $q \in Q$ and $r\in R$ for which $d(q, r) < \delta$ if and only if there exist $s, s' \in S$ for which $d(s, s') < \delta$.  
+\end{quote}
+ 
+ 
+ Now, it can be show that if $s, s' \in S$ have the property that $d(s, s') < \delta$, then $s$ and $s'$ are within $15$ positions of each other in the sorted list $S_y$ (proof omitted). While this bound is not tight, the important note is that the distance between the points is is an absolute constant. We can now conclude the algorithm by making a single pass through $S_y$ and, for each $s\in S_y$, computing the distance to the next $15$ points in $S_y$. The runtime of this procedure is linear, so we've successfully figured out how to combine our solutions in linear time. \\
+ 
+ Thus, the recurrence for our algorithm takes the form
+ \[
+ T(n) = 2T(n/2) + \O(n).
+ \]
+ 
+ By Master's Theorem, we conclude $T(n) = \O(n\log(n))$.
+
+\subsection{Counting Inversions}
+
+\begin{definition}
+Given an array \verb!A!, an \vocab{inversion} if a pair of indices $(i, j)$ for which both \verb!i < j! and \verb!A[i] > A[j]! hold.  
+\end{definition}
+
+
+
+
+The inversion problem is stated as follows:
+
+\begin{quote}
+    Given an array \verb!A!, count the number of inversions in \verb!A!. 
+\end{quote}
+
+We can think of the number of inversion in an array as the number of ``bubble sort swaps" (swap between pairs of consecutive items) needed in order to sort the array. 
+
+\begin{example}
+[Reverse-Sorted Array] 
+The array \verb!A = [3, 2, 1]! has exactly $3$ inversions. Namely, $(1, 2), (1, 3)$ and $(2, 3)$. 
+\end{example}
+
+\begin{example}
+[Unsorted Array]
+The array \verb!A = [3, 2, 1, 4]! also has $3$ inversions. 
+\end{example}
+
+The most obvious solution is to simply use two nested for-loops and increment an \verb!answer! variable every time we find an inversion. Here's an implementation of the brute force solution:
+
+\begin{lstlisting}
+int main(void) {
+    /* Assume we have initialized an array "A" */
+    int answer = 0;
+    for (int i = 0; i < N; i++) {
+        for (int j = i + 1; j < N; j++) {
+            /* The condition i < j is always true. */
+            if (A[i] > A[j]) {
+                /* (i, j) is an inversion. */
+                answer = answer + 1;
+            }
+        }
+    } 
+    cout << "Number of inversions: " << answer << endl;
+}
+\end{lstlisting}
+
+The runtime of this algorithm is $\mathcal{O}(n^2)$, but of course, we want to do better. \\
+
+Once again, we can take a divide and conquer approach for the inversion problem. More precisely, we can just modify the \verb!MergeSort! algorithm. The key observation is that during the \verb!merge! process of merge sort, if the frnot of the right sorted sublist is taken rather than the front of the left sorted sublist, then we can say that one or more inversions occur. We increment our inversion counter by the size of the current left sublist since all of those indices cause an inversion with the current element we are looking at in our right sublist. \\
+
+The runtime of this algorithm is $\mathcal{O}(n\log(n))$ since we're only adding a few constant-time operations to the merge sort procedure. \\
+
+A full implementation is provided on the next page.
+
+\newpage
+
+\begin{lstlisting}
+int merge(vector<int>& A, int l, int m, int r) {
+	vector<int> B(r - l + 1);
+	int i = l, j = m + 1, k = 0;
+	int inversions = 0;
+
+	while (i <= m && j <= r) {
+		if (A[i] <= A[j]) {
+			B[k++] = A[i++];
+		} else {
+			B[k++] = A[j++];
+			inversions += (m + 1 - i);
+		}
+	}
+
+    /* Only one of the following two while-loops 
+    will be executed. */
+	while (i <= m) B[k++] = A[i++];
+	while (j <= r) B[k++] = A[j++];
+
+	for (int i = l; i <= r; i++) {
+		A[i] = B[i - l];
+	}
+
+	return inversions;
+}
+
+int mergesort(vector<int> &A, int l, int r) {
+	int inversions = 0;
+	if (r > l) {
+		int m = l + (r - l)/2;
+		inversions += mergesort(A, l, m);
+		inversions += mergesort(A, m + 1, r);
+		inversions += merge(A, l, m, r);
+	}
+	return inversions;
+}
+
+/* (i, j) is an inversion if A[i] > A[j] and i < j.
+   O(n*log(n)) inversion counting. */
+int inversion_count(vector<int>& A) {
+	return mergesort(A, 0, A.size() - 1);
+}
+\end{lstlisting}

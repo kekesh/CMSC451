@@ -65,7 +65,7 @@ How fast does Strassen's algorithm run? Let $f(n)$ denote the number of multipli
 The closest pair of points problem is stated as follows:
 
 \begin{quote}
-    Given $n$ points in the plane $p_1, p_2, p_3, \ldots, p_n$, find two points $p_i$ and $p_j$ such that the Euclidean distance between $p_i$ and $p_j$ is minimal. 
+    Given $n$ points in the plane $P = \{p_1, p_2, p_3, \ldots, p_n\}$, find two points $p_i$ and $p_j$ such that the Euclidean distance between $p_i$ and $p_j$ is minimal. 
 \end{quote}
 
 A simple brute force solution is to consider all ${n\choose 2}$ pairs of points, and keep track of the minimum distance value seen so far (this \verb!minimum! variable would initially be set to $\infty$). The runtime of this algorithm is $\mtahcal{O}(n^2)$ since computing the distance between two points is a constant-time operation. \\
