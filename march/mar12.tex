@@ -1,0 +1,19 @@
+\newpage
+\section{Thursday, March 12, 2020}
+
+\subsection{All-Pairs Shortest Paths}
+
+Suppose we are given a weighted, directed graph $G = (V, E)$ with a weight function $w : E \rightarrow \mathbb{R}$ that maps edges to real-valued weights (the mapped values are henceforth referred to as \vocab{edge weights}). Moreover, for any two vertices $u, v\in V$, we define $\delta(u, v)$ as the \vocab{shortest path} (where we minimize the sum of edge weights) between the vertices $u$ and $v$. \\
+
+We want to find, for every pair of vertices $u, v \in V$, the value of $\delta(u, v)$. This is known as the \vocab{all-pairs shortest path problem} (ASSP). Note that this differs from the single-source shortest path problem (SSSP) (which Dijkstra's algorithm solves) since SSSP only wants to compute the shortest path from a single source to a single destination. On the other hand, ASSP wants to compute the distances between \textit{all} pairs of vertices. \\
+
+We can solve the ASSP by running a single-source shortest path algorithm $|V|$ times (once for each possible source vertex). Using a binary min-heap implementation of the minimum priority queue in Dijkstra's algorithm yields a running time of $\mathcal{O}(VE\log(V))$. However, Dijkstra's algorithm has a disadvantage: it doesn't work for negative edge weights. If $G$ has negative edge weights, then we need to use a different SSSP algorithm, like Bellman-Ford, which would increase our running time to $\mathcal{O}(V^4).$ Thus, we seek to do better.
+
+
+\subsubsection{Floyd-Warshall Algorithm}
+
+The \vocab{Floyd-Warshall algorithm} solves ASPS by 
+
+\subsubsection{Transitive Closure}
+
+asdf

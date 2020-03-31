@@ -1,5 +1,133 @@
 \newpage
 \section{Thursday, March 5, 2020}
 
-\subsection{Fast Fourier Transform}
+Today, we'll begin discussing our last divide-and-conquer topic: the Fast Fourier (``four-ee-aye") Transform. The problem that we are trying to solve is stated as follows:
 
+\begin{quote}
+    Given two vectors $a = (a_0, a_1, \ldots, a_{n - 1})$ and $b = (b_0, b_1, \ldots, b_{n - 1})$, compute the convolution $a\star b$ of $a$ and $b$. 
+\end{quote}
+
+Before discussing the algorithm that lets us do this, let's first discuss convolutions and why they're important. 
+
+\subsection{Convolutions}
+
+A \vocab{convolution} of two vectors $a$ and $b$ is a method of ``combining" the two vectors. More precisely, we define the convolution of the vectors $a = (a_0, a_1, \ldots, a_{n - 1})$ and $b = (b_0, b_1, \ldots, b_{n - 1})$ by the vector $c = (c_0, c_2, \ldots, c_{2n - 2})$ in which
+
+\[
+c_k = \sum_{(i, j) \mid i + j = k} a_i b_j.
+\]
+
+In other words, we have,
+
+\[
+a\star b = (a_0b_0, a_0b_1 + a_1b_0, \ldots, a_{n-1}b_{n-1}).
+\]
+
+Note that each summand in the $k^{\text{th}}$ component of this vector exhausts all possible pairs of indices that sum to $k$. Moreover, note that the convolution of two $n$-dimensional vectors produces a $(2n - 1)$-dimensional vector. However, unlike the vector sum and inner product, the convolution can easily be generalized to vectors of different lengths: if $a = (a_0, a_1, \ldots, a_{m - 1})$ and $b = (b_0, b_1, \ldots, b_{n - 1})$, then we define $a \star b$ to be a vector with $m + n - 1$ coordinates, where the $k^{\text{th}}$ coordinate is equal to the sum over all $a_ib_j$ in which $i + j = k$, $i < m$ and $b < n$. \\[1em]
+
+
+Why do we care about the convolution? Here are some examples in which convolutions are useful:
+
+\begin{example}
+[Polynomial Multiplication]
+Suppose we have two polynomials $A(x) = a_0 + a_1x + a_2x^2 + \cdots + a_{m - 1}x^{m - 1}$ and $B(x) = b_0 + b_1x + b_2x^2 + \cdots + b_{n - 1}x^{n - 1}$ and we wish to compute the product $C(x) = A(x) \cdot B(x)$. In order to do so, we can define the vectors $a = (a_0, a_1, \ldots, a_{m - 1})$ and $b = (b_0, b_1, \ldots, b_{n - 1})$ and compute the convolution $c = a\star b$. In the polynomial $C(x)$, the coefficient of $x^{k}$ is equal to the $k^{\text{th}}$ component of $c$.
+\end{example}
+
+
+\begin{example}
+[Combining Histograms]
+Suppose we're studying a population of people, and we have two histograms. The first histogram shows the annual income of all the men in the population, and the other shows the annual income of all the women. We would like to produce a new histogram showing for each $k$ the number of pairs $(M, W)$ for which man $M$ and woman $W$ have a combined income of $k$. This problem can be restated as a convolution. More precisely, let $a = (a_0, \ldots, a_{m - 1})$ and $b = (b_0, \ldots, b_{n - 1})$ be our histograms, and let $c_k$ denote the number of $(m, w)$ pairs with combined income $k$. Observe that $c_k$ is the number of ways to choose a man with income $a_i$ and woman with income $b_j$ with $i + j = k$. This quantity is given by a convolution.
+\end{example}
+
+\begin{example}
+[Sum of Independent Random Variables]
+If one is familiar with probability theory, then they may have encountered a theorem which tells us that the probabiliy distribution function for the sum of two random variables is a convolution of the distributions of the summands.
+\end{example}
+
+Now that we've motivated the importance of convolutions, we'll now discuss how to compute convolutions efficiently. For simplicity, we consider the case in which our two vectors have equal length (i.e. $m = n)$; however, our results hold for vectors of unequal length. \\
+
+Computing a convolution efficiently is more difficult than it seems. If, for each $k$, we just calculate the sum $\sum_{(i, j) \mid i + j = k} a_ib_j$ and use it as the $k^{\text{th}}$ coordinate in our convolution vector, we end up with an $\mathcal{O}(n^2)$ algorithm. Fortunately, we can do better --- the \vocab{fast Fourier Transform} allows us to compute convolutions in $\mathcal{O}(n\log(n))$ time.
+
+\subsection{The Fast Fourier Transform}
+
+In order to compute convolutions quickly, we will make use of the connection between the convolution and polynomial multiplication. However, rather than using convolutions to perform polynomial multiplication, we will exploit the connection in the opposite direction. \\
+
+
+Given two vectors $a = (a_0, \ldots, a_{n - 1})$ and $b = (b_0, \ldots, b_{n - 1})$, we define $A(x)$ and $B(x)$ to be the polynomials $a_0 + a_1x + \cdots + a_{n-1}x^{n-1}$ and $b_0 + b_1x + \cdots + b_{n-1}x^{n-1}$, respectively. Under this interpretation, we wish to compute the product $C(x) = A(x)B(x)$ in $\mathcal{O}(n\log(n))$ time. From there, we can simply ``read off" the convolution directly from the coefficients of $C(x)$. \\
+
+Now, instead of multiplying $A$ and $B$ directly, we can treat them as functions of the variable $x$ and multiply them with the following three steps:
+
+\begin{enumerate}
+    \item Choose $2n$ values $x_1, x_2, \ldots, x_{2n}$ and evaluate $A(x_j)$ and $B(x_j)$ for each $j = 1, 2, \ldots, 2n$.
+    \item Now for each index $1 \leq j \leq 2n$, we can easily compute $C(x_j)$. In particular, $C(x_j)$ is equal to the product of the two numbers $A(x_j)$ and $B(x_j)$.
+    \item Finally, we need to recover the polynomial $C$ from its values on $x_1, x_2, \ldots, x_{2n}$. Since any polynomial of degree $d$ is fully determined by a set of $d + 1$ or more points, this is clearly possible. Since each $A$ and $B$ have degree at most $n - 1$, their product $C$ has degree at most $2n - 2$. Thus, it can be reconstructed from the values $C(x_1), C(x_2), \ldots, C(x_{2n})$ that we computed earlier.
+\end{enumerate}
+
+This approach to multiplying polynomials sounds promising, but there are a couple of issues we need to address. Evaluating the polynomials $A$ and $B$ on a single point takes $\Omega(n)$ operations (using Horner's method\footnote{\url{https://en.wikipedia.org/wiki/Horner\%27s_method}}, and our plan calls for performing $2n$ such evaluations. This brings us back up to quadratic time immediately. Moreover, we need a way to quickly reconstruct the polynomial $C$ from the points $C(x_1), C(x_2), \ldots, C(x_2n)$. \\
+
+We address these two issues separately.
+
+\subsubsection{Polynomial Evaluation}
+
+We need to evaluate the polynomials $A$ and $B$ on $2n$ different points quickly. The key idea to doing this quickly is to find a set of $2n$ points $x_1, \ldots, x_{2n}$ that are related in some way so that the work in evaluating $A$ and $B$ on all of them can be shared across different evaluations. A set that works very well for us is the roots of unity. \\
+
+\begin{definition}
+An \vocab{$n^{\text{th}}$ root of unity} is a number $z$ satisfying the equation $z^{n} = 1$.
+\end{definition}
+
+It can be shown that there are $n$ $n^{\text{th}}$ roots of unity. Moreover, these roots are given by $e^{2k\pi i/n}$ for $k = 0, 1, \ldots, n - 1$. Clearly, each of these complex numbers satisfy our definition since
+\[
+(e^{2k \pi i/n})^{n} = e^{2k \pi i} = (e^{2 \pi i})^{k} = 1^{k} = 1.
+\]
+
+For our numbers $x_1, \ldots, x_{2n}$ on which to evaluate $A$ and $B$, we will choose the $(2n)^{\text{th}}$ roots of unity, and we propose a recursive procedure to compute $A$ on each of the $(2n)^{\text{th}}$ roots of unity. For simplicity, we henceforth assume that $n$ is a power of $2$. \\
+
+Let $A_{\text{even}}(x)$ and $A_{\text{odd}}(x)$ be two polynomials that consist of the even and odd coefficients of $A$, respectively. That is, we have,
+\[
+A_{\text{even}}(x) = a_0 + a_2x + a_4x^2 + \cdots + a_{n - 2}x^{(n - 2)/2},
+\]
+
+and
+
+\[
+A_{\text{odd}}(x) = a_1 + a_3x + a_5x^2 + \cdots + a_{(n - 1)}x^{(n - 2)/2}.
+\]
+
+By simple algebra, we can see that we can express $A(x)$ as 
+
+\[
+A(x) = A_{\text{even}}(x^{2}) + xA_{\text{odd}}(x^{2}),
+\]
+
+which demonstrates that we can compute $A(x)$ in a constant number of operations provided that we already have $A_{\text{even}}$ and $A_{\text{odd}}$. Now suppose we evaluate both $A_{\text{even}}$ and $A_{\text{odd}}$ on the $n^{\text{th}}$ roots of unity. This is an exact replica of the problem we face with $A$ and the $(2n)^{\text{th}}$ roots of unity, except the input is half as large; the degrees of our two polynomials are $(n - 2)/2$ rather than $n - 1$. Moreover, we have $n$ roots of unity rather than $2n$. Thus, we can perform these evaluations recursively in time $T(n/2)$ for each of $A_{\text{even}}$ and $A_{\text{odd}}$, for a total of $2T(n/2)$ time. \\
+
+But, how do we perform these evaluations? This can be done with $\mathcal{O}(n)$ additional operations given the results from the recursive calls on $A_{\text{even}}$ and $A_{\text{odd}}$.  Let $\omega = e^{2\pi i k/2n}$ be a $(2n)^{\text{th}}$ root of unity for some integer $k$. The quantity $\omega^{2}$ is equal to $e^{2\pi k i/n}$, which is an $n^{\text{th}}$ root of unity.  \\
+
+Thus, when we go to compute $A(\omega) = A_{\text{even}}(\omega^{2}) + \omega \cdot A_{\text{odd}}(\omega^2)$,we find that both evaluations on the right-hand side have been performed in a recursive step, which means that we can compute $A(\omega)$ in a constant number of operations. Repeating for each of the $2n$ roots of unity is therefore $\mathcal{O}(n)$ additional operations. \\
+
+Therefore, our bound $T(n)$ on the number of operations satisfies $T(n) = 2T(n/2) + \mathcal{O}(n)$, which gives us the desired $\mathcal{O}(n\log(n))$ bound for the first step of our algorithm. \\
+
+
+\subsubsection{Polynomial Interpolation}
+
+Next, we'll discuss how to Now, we've seen how to evaluate $A$ and $B$ on the set of all $(2n)^{\text{th}}$ roots of unity using $\mathcal{O}(n\log(n))$ operations. Also, we can clearly perform the second step of our algorithm naively in linear time. Thus, to conclude the algorithm for multiplying $A$ and $B$, we need to reconstruct the polynomial $C$ from its values on the $(2n)^{\text{th}}$ roots of unity in $\mathcal{O}(n\log(n))$ time. \\
+
+
+The reconstruction of $C$ can be achieved by defining an appropriate polynomial and evaluating it at the $(2n)^{\text{th}}$ roots of unity. This is exactly what we've just seen how to do using $\mathcal{O}(n\log(n))$ operations, so we'll do it here again. This requires an additional $\mathcal{O}(n\log(n))$ operations, and it concludes our algorithm. \\
+
+Consider a polynomial $C(x) = \sum_{s=0}^{2n - 1} c_sx^s$ that we want to reconstruct from its values at the $C(\omega_{s, 2n})$ at the $(2n)^{\text{th}}$ roots of unity. Define a new polynomial $D(x) \defeq \sum_{s = 0}^{2n - 1} d_{s}x^{s}$ where $d_s = C(\omega_{s, 2n}$. We now consider the values of $D(x)$ at the $(2n)^{\text{th}}$ roots of unity: 
+
+\begin{align*}
+D(\omega_{j, 2n}) &= \sum_{s = 0}^{2n - 1} C(\omega_{s, 2n}) \omega_{j, 2n}^{s} \\[1em]
+&= \sum_{s=0}^{2n - 1}\left( \sum_{t = 0}^{2n - 1} c_{t} \omega_{s, 2n}^{t} \right)\omega_{j, 2n}^{s}. 
+\end{align*}
+
+Now since $\omega_{s, 2n} = (e^{2\pi i/2n})^{s}$, we get that 
+\[ 
+D(\omega_{j, 2n}) = \sum_{t=0}^{2n - 1}c_t \sum_{s = 0}^{2n - 1} \omega_{t + j, 2n}^{s}).
+\]
+However, note that for any $(2n)^{\text{th}}$ root of unity $\omega \neq 1$, we have $\sum_{s = 0}^{2n - 1} \omega^{s} = 0$. Thus, the only term that of the last line's outer sum that is not equal to $0$ is for $c_t$ such that $\omega_{t + j, 2n} = 1$. This happens precisely when $t + j = 2n - j$. \\
+
+It follows immediately that for any polynomial $C(x) = \sum_{s = 0}^{2n - 1}c_sx^{s}$ and corresponding polynomial $D(x) = \sum_{s = 0}^{2n - 1} C(\omega_{s, 2n}) x^{s}$, we have $c_s = \frac{1}{2n} D(\omega_{2n - s, 2n})$.  \\
+
+Thus, we can reconstruct the polynomial $C$ from its values on the $(2n)^{\text{th}}$ roots of unity, and the coefficients of $C$ are the coordinates in the convolution vector $a \star b$ that we were originally seeking. Therefore, we are done.
