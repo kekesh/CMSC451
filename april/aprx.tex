@@ -1,0 +1,58 @@
+\newpage
+\section{Thursday, April 2, 2020} 
+
+\subsection{Subset Sum Problem}
+
+Today, we'll discuss another classical dynamic programming problem, known as the \vocab{subset sum problem}.\footnote{The subset sum problem is a special case of another classical dynamic programming problem, known as the \vocab{knapsack problem}. In the knapsack problem, each item $1 \leq i \leq n$ has a value $v_i$ and weight $w_i$. For each item, we want to assign a number $x_i \in \{0, 1\}$ so that $\sum_{i}x_iv_i$ is maximized subject to $\sum_{i} x_i w_i \leq W$. } The subset problem is stated as follows:
+
+\begin{quote}
+    Suppose we are given $n$ items $\{1, 2, \ldots, n\}$ each with nonnegative weight $w_i$. We are also given a bound $W$. How do we select a subset $S$ of the items so that $\sum_{i\in S} w_i$ is maximized subject to $\sum_{i\in S} w_i \leq W$?
+\end{quote}
+
+In other words, given $n$ items each with nonnegative weights, what's the closest we can get to a weight of $W$ without going over?  \\
+
+\begin{example}
+[Subset Sum Example] Suppose $n = 3$ with $w_1 = 2$, $w_2 = 3$, $w_3 = 4$, and $W = 5$. The solution to this instance of the subset problem is $\boxed{5}$ --- it is optimal to choose $w_1$ and $w_2$. 
+\label{greedy:01}
+\end{example}
+
+Does a greedy solution work? One greedy rule might be to sort the items in ascending order by weight and always pick the item with maximal weight that hasn't been taken yet. However, this greedy rule fails in \Cref{greedy:01}; we'll end up with a total weight of $4$, which is sub-optimal. \\
+
+We demonstrate how we can use dynamic programming to solve this problem. Recall that the main principles of dynamic programming are to come up with a recurrence so that we can relate the problem we want to solve to ``smaller" subproblems. The tricky issue is determining what a good set of subproblems consists of. \\
+
+One general strategy in dynamic programming is to consider subproblems consisting of only the first $i$ ``requests," or items. We can use this strategy here. Formally, let $\OPT(i)$ denote the best possible solution using only the subset $\{1, \ldots, i\}$ of the original set of items. Now, the key to this problem is to concentrate on an optimal solution and consider two different cases, depending on whether or not the last item $n$ we processed is part of this optimum solution or not. Let $\mathcal{O}$ denote an optimal solution.\\
+
+
+If $n \not \in \mathcal{O}$, then $\OPT(n) = \OPT(n - 1)$. This is obvious --- if the last item we processed isn't a part of our optimal solution, then the optimal solution using only $\{1, 2, \ldots, n - 1\}$ shouldn't change when $n$ is included (we now have the option to take $n$, but we don't want $n$ anyways!). \\
+
+
+The only other case we have to consider is the case in which $n \in \mathcal{O}$. What we need to find is a simple recursion that tells us the best possible value we can obtain for solutions containing the last request $n$. Note that accepting request $n$ does not immediately imply that we have to reject any other requests. Instead, it means that for the subset of requests $S \subseteq \{1, 2, \ldots, n - 1\}$ that we will accept, we have less available weight left. More precisely, we will have $W - w_n$ weight left for the remaining set of items we accept. \\
+
+
+This suggests that we need more subproblems: we cannot just use the value $\OPT(n - 1)$ when we're including item $n$ since the combined weight of the items in $\OPT(n - 1)$ and item $n$ might exceed $W$. What we precisely need is the best solution using the first $n - 1$ items when the total weight allowed is $W - w_n$. Thus, we require many more subproblems: one for each initial set $\{1, 2, \ldots, i\}$ of the items, and each possible value for the remaining weight available $w$. \\
+
+More precisely, if each of our items $1, 2, \ldots, n$ have integer weights $w_i$ and our maximum weight bound is $W$, then we have a subproblem for each $i = 0, 1, \ldots, n$ and each integer $0 \leq w \leq W.$ We henceforth use $\OPT(i, w)$ to denote the value of the optimal solution using the subset of the items $\{1, 2, \ldots, i\}$ with maximum allowed weight $w$. That is,
+
+\[
+\OPT(i, w) = \max_{S \subseteq \{1, 2, \ldots, i\}} \sum_{j \in S} w_j \hspace{1em} \text{subject to  } \sum_{j \in S} w_j \leq w.
+\]
+
+Using this new set of subproblems, we can note that the final answer we want is $\OPT(n, W)$. Moreover, we can express the value $\OPT(i, w)$ as an expression from smaller problems. These results are summarized below:
+
+\begin{enumerate}
+    \item If $n \not \in \O$, then $\OPT(n, W) = \OPT(n - 1, W)$ since we can ignore the item $n$.
+    \item If $n\in \O$, then $\OPT(n, W) = w_n + \OPT(n - 1, W - w_n)$ since we now want to use the remaining capacity $W - w_n$ in an optimal way across the first $n - 1$ items.
+\end{enumerate}
+
+If $W < w_n$ for some item $n$, then we require $\OPT(n, W) = \OPT(n - 1, W)$ since we aren't allowed to take item $n$ due to our constraint. Now that we've considered both cases, we can get the optimum solution by simply taking the better of these two options. Therefore, we obtain the following recurrence:
+
+\[
+\OPT(i, W) = \begin{cases}
+\max(\OPT(i - 1, w), w_i + \OPT(i - 1, W - w_i)) & \text{ if } w_i \leq W \\[1em]
+\OPT(i - 1, w) & \text{ otherwise.}
+\end{cases}
+\]
+
+Also, we have the base cases $\OPT(i, w) = 0$ provided that $i = 0$ since we aren't allowed to take any items when $i = 0$. \\
+
+With our recurrence and base cases established, we are done. 
